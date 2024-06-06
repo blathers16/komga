@@ -149,6 +149,7 @@ class SeriesController(
     @RequestParam(name = "deleted", required = false) deleted: Boolean? = null,
     @RequestParam(name = "complete", required = false) complete: Boolean? = null,
     @RequestParam(name = "oneshot", required = false) oneshot: Boolean? = null,
+    @RequestParam(name = "tag_and", required = false) tagAnd: Boolean = true,
     @RequestParam(name = "unpaged", required = false) unpaged: Boolean = false,
     @Parameter(hidden = true) @Authors authors: List<Author>? = null,
     @Parameter(hidden = true) page: Pageable,
@@ -199,7 +200,7 @@ class SeriesController(
       )
 
     var hasAllTags: Predicate<SeriesDto>
-    if (!tags.isNullOrEmpty()) {
+    if (!tags.isNullOrEmpty() && tagAnd) {
       hasAllTags = Predicate { s -> s.metadata.tags.containsAll(tags) }
     }
     else {
