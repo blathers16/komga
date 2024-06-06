@@ -66,6 +66,7 @@ import org.gotson.komga.interfaces.api.rest.dto.toDto
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.core.io.FileSystemResource
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -93,6 +94,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.io.OutputStream
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
+import java.util.function.Predicate
 import java.util.zip.Deflater
 
 private val logger = KotlinLogging.logger {}
@@ -196,8 +198,15 @@ class SeriesController(
         sharingLabels = sharingLabels,
       )
 
-    return seriesDtoRepository.findAll(seriesSearch, principal.user.id, pageRequest, principal.user.restrictions)
-      .map { it.restrictUrl(!principal.user.roleAdmin) }
+    var hasAllTags: Predicate<SeriesDto>
+    if (!tags.isNullOrEmpty()) {
+      hasAllTags = Predicate { s -> s.metadata.tags.containsAll(tags) }
+    }
+    else {
+      hasAllTags = Predicate { _ -> true }
+    }
+    return PageImpl(seriesDtoRepository.findAll(seriesSearch, principal.user.id, pageRequest, principal.user.restrictions)
+      .map { it.restrictUrl(!principal.user.roleAdmin) }.filter{s -> hasAllTags.test(s)}.toList())
   }
 
   @AuthorsAsQueryParam
